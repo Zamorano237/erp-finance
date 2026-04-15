@@ -336,6 +336,33 @@
 .supplier-filter-actions .btn {
     margin: 0;
 }
+
+/* Colonne Actions toujours visible à droite */
+#suppliersTable th.actions-col,
+#suppliersTable td.actions-col {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+}
+
+/* Fond propre pour éviter la transparence pendant le scroll */
+#suppliersTable th.actions-col {
+    background: linear-gradient(180deg, #0b4d62 0%, #083f51 100%);
+    box-shadow: -8px 0 12px rgba(8, 63, 81, 0.08);
+}
+
+
+/* Si tu as un zebra stripe, on garde un fond cohérent */
+#suppliersTable tbody tr:nth-child(even) td.actions-col {
+    background: #fbfdff;
+}
+
+/* La cellule actions doit avoir une largeur stable */
+#suppliersTable th.actions-col,
+#suppliersTable td.actions-col {
+    min-width: 170px;
+    width: 170px;
+}
 </style>
 
 <div class="page-head">
@@ -507,7 +534,52 @@
                     <option value="{{ $size }}" @selected(($perPage ?? 15) === $size)>{{ $size }} lignes</option>
                 @endforeach
             </select>
+            @foreach(($filterCustomFields ?? []) as $field)
+    @if($field->field_type === 'boolean')
+        <select class="field-select" name="cf_{{ $field->id }}">
+            <option value="">{{ $field->label }}</option>
+            <option value="1" @selected(($filters['cf_' . $field->id] ?? '') === '1')>Oui</option>
+            <option value="0" @selected(($filters['cf_' . $field->id] ?? '') === '0')>Non</option>
+        </select>
 
+    @elseif($field->field_type === 'select')
+        <select class="field-select" name="cf_{{ $field->id }}">
+            <option value="">{{ $field->label }}</option>
+            @foreach($field->optionValues() as $optionValue => $optionLabel)
+                <option value="{{ $optionValue }}" @selected(($filters['cf_' . $field->id] ?? '') === (string) $optionValue)>
+                    {{ $optionLabel }}
+                </option>
+            @endforeach
+        </select>
+
+    @elseif($field->field_type === 'date')
+        <input
+            class="field"
+            type="date"
+            name="cf_{{ $field->id }}"
+            value="{{ $filters['cf_' . $field->id] ?? '' }}"
+        >
+
+    @elseif($field->field_type === 'number')
+        <input
+            class="field"
+            type="number"
+            step="0.01"
+            name="cf_{{ $field->id }}"
+            value="{{ $filters['cf_' . $field->id] ?? '' }}"
+            placeholder="{{ $field->label }}"
+        >
+
+    @else
+        <input
+            class="field"
+            type="text"
+            name="cf_{{ $field->id }}"
+            value="{{ $filters['cf_' . $field->id] ?? '' }}"
+            placeholder="{{ $field->label }}"
+        >
+    @endif
+@endforeach
             <input type="hidden" name="sort_by" value="{{ $sortBy ?? 'name' }}">
             <input type="hidden" name="sort_direction" value="{{ $sortDirection ?? 'asc' }}">
 
@@ -603,99 +675,117 @@
                         <tr>
                             @foreach($columns as $key => $label)
                                 <td data-column="{{ $key }}">
-                                    @switch($key)
-                                        @case('code')
-                                        @case('name')
-                                        @case('auxiliary_account')
-                                        @case('default_label')
-                                        @case('email')
-                                        @case('phone')
-                                            <input
-                                                type="text"
-                                                class="supplier-inline-input js-inline-edit"
-                                                data-id="{{ $supplier->id }}"
-                                                data-field="{{ $key }}"
-                                                value="{{ $supplier->{$key} }}"
-                                            >
-                                            @break
+                                    @if(str_starts_with($key, 'cf_'))
+    @php($dynamicValue = $supplier->getCustomFieldResolvedValue((int) str_replace('cf_', '', $key)))
 
-                                        @case('payment_delay_days')
-                                        @case('forecast_amount')
-                                        @case('vat_rate_default')
-                                            <input
-                                                type="number"
-                                                step="{{ in_array($key, ['forecast_amount', 'vat_rate_default'], true) ? '0.01' : '1' }}"
-                                                class="supplier-inline-input js-inline-edit"
-                                                data-id="{{ $supplier->id }}"
-                                                data-field="{{ $key }}"
-                                                value="{{ $supplier->{$key} }}"
-                                            >
-                                            @break
+    @if($dynamicValue === null || $dynamicValue === '')
+        -
+    @elseif($dynamicValue === true || $dynamicValue === '1' || $dynamicValue === 1)
+        <span class="badge success">Oui</span>
+    @elseif($dynamicValue === false || $dynamicValue === '0' || $dynamicValue === 0)
+        <span class="badge danger">Non</span>
+    @elseif(preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $dynamicValue))
+        {{ \Carbon\Carbon::parse($dynamicValue)->format('d/m/Y') }}
+    @elseif(is_numeric($dynamicValue))
+        {{ number_format((float) $dynamicValue, 2, ',', ' ') }}
+    @else
+        {{ $dynamicValue }}
+    @endif
+@else
+    @switch($key)
+        @case('code')
+        @case('name')
+        @case('auxiliary_account')
+        @case('default_label')
+        @case('email')
+        @case('phone')
+            <input
+                type="text"
+                class="supplier-inline-input js-inline-edit"
+                data-id="{{ $supplier->id }}"
+                data-field="{{ $key }}"
+                value="{{ $supplier->{$key} }}"
+            >
+            @break
 
-                                        @case('category')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="category">
-                                                <option value="">-</option>
-                                                @foreach($configLists['supplier_categories'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->category === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('payment_delay_days')
+        @case('forecast_amount')
+        @case('vat_rate_default')
+            <input
+                type="number"
+                step="{{ in_array($key, ['forecast_amount', 'vat_rate_default'], true) ? '0.01' : '1' }}"
+                class="supplier-inline-input js-inline-edit"
+                data-id="{{ $supplier->id }}"
+                data-field="{{ $key }}"
+                value="{{ $supplier->{$key} }}"
+            >
+            @break
 
-                                        @case('third_party_type')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="third_party_type">
-                                                <option value="">-</option>
-                                                @foreach($configLists['tier_types'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->third_party_type === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('category')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="category">
+                <option value="">-</option>
+                @foreach($configLists['supplier_categories'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->category === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @case('budget_category')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="budget_category">
-                                                <option value="">-</option>
-                                                @foreach($configLists['budget_categories'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->budget_category === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('third_party_type')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="third_party_type">
+                <option value="">-</option>
+                @foreach($configLists['tier_types'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->third_party_type === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @case('frequency')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="frequency">
-                                                <option value="">-</option>
-                                                @foreach($configLists['supplier_frequencies'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->frequency === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('budget_category')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="budget_category">
+                <option value="">-</option>
+                @foreach($configLists['budget_categories'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->budget_category === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @case('receipt_mode')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="receipt_mode">
-                                                <option value="">-</option>
-                                                @foreach($configLists['supplier_receipt_modes'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->receipt_mode === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('frequency')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="frequency">
+                <option value="">-</option>
+                @foreach($configLists['supplier_frequencies'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->frequency === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @case('payment_mode')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="payment_mode">
-                                                <option value="">-</option>
-                                                @foreach($configLists['supplier_payment_modes'] ?? [] as $value)
-                                                    <option value="{{ $value }}" @selected($supplier->payment_mode === $value)>{{ $value }}</option>
-                                                @endforeach
-                                            </select>
-                                            @break
+        @case('receipt_mode')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="receipt_mode">
+                <option value="">-</option>
+                @foreach($configLists['supplier_receipt_modes'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->receipt_mode === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @case('is_active')
-                                            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="is_active">
-                                                <option value="1" @selected($supplier->is_active)>Oui</option>
-                                                <option value="0" @selected(! $supplier->is_active)>Non</option>
-                                            </select>
-                                            @break
+        @case('payment_mode')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="payment_mode">
+                <option value="">-</option>
+                @foreach($configLists['supplier_payment_modes'] ?? [] as $value)
+                    <option value="{{ $value }}" @selected($supplier->payment_mode === $value)>{{ $value }}</option>
+                @endforeach
+            </select>
+            @break
 
-                                        @default
-                                            {{ $supplier->{$key} }}
-                                    @endswitch
+        @case('is_active')
+            <select class="supplier-inline-input js-inline-edit" data-id="{{ $supplier->id }}" data-field="is_active">
+                <option value="1" @selected($supplier->is_active)>Oui</option>
+                <option value="0" @selected(! $supplier->is_active)>Non</option>
+            </select>
+            @break
+
+        @default
+            {{ $supplier->{$key} }}
+    @endswitch
+@endif
                                 </td>
                             @endforeach
 

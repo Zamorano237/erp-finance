@@ -334,6 +334,33 @@
 .supplier-filter-actions .btn {
     margin: 0;
 }
+
+/* Colonne Actions toujours visible à droite */
+#suppliersTable th.actions-col,
+#suppliersTable td.actions-col {
+    position: sticky;
+    right: 0;
+    z-index: 3;
+}
+
+/* Fond propre pour éviter la transparence pendant le scroll */
+#suppliersTable th.actions-col {
+    background: linear-gradient(180deg, #0b4d62 0%, #083f51 100%);
+    box-shadow: -8px 0 12px rgba(8, 63, 81, 0.08);
+}
+
+
+/* Si tu as un zebra stripe, on garde un fond cohérent */
+#suppliersTable tbody tr:nth-child(even) td.actions-col {
+    background: #fbfdff;
+}
+
+/* La cellule actions doit avoir une largeur stable */
+#suppliersTable th.actions-col,
+#suppliersTable td.actions-col {
+    min-width: 170px;
+    width: 170px;
+}
 </style>
 
 <div class="page-head">
@@ -501,7 +528,53 @@
                     <option value="<?php echo e($size); ?>" <?php if(($perPage ?? 15) === $size): echo 'selected'; endif; ?>><?php echo e($size); ?> lignes</option>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
+            <?php $__currentLoopData = ($filterCustomFields ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $field): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <?php if($field->field_type === 'boolean'): ?>
+        <select class="field-select" name="cf_<?php echo e($field->id); ?>">
+            <option value=""><?php echo e($field->label); ?></option>
+            <option value="1" <?php if(($filters['cf_' . $field->id] ?? '') === '1'): echo 'selected'; endif; ?>>Oui</option>
+            <option value="0" <?php if(($filters['cf_' . $field->id] ?? '') === '0'): echo 'selected'; endif; ?>>Non</option>
+        </select>
 
+    <?php elseif($field->field_type === 'select'): ?>
+        <select class="field-select" name="cf_<?php echo e($field->id); ?>">
+            <option value=""><?php echo e($field->label); ?></option>
+            <?php $__currentLoopData = $field->optionValues(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $optionValue => $optionLabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($optionValue); ?>" <?php if(($filters['cf_' . $field->id] ?? '') === (string) $optionValue): echo 'selected'; endif; ?>>
+                    <?php echo e($optionLabel); ?>
+
+                </option>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </select>
+
+    <?php elseif($field->field_type === 'date'): ?>
+        <input
+            class="field"
+            type="date"
+            name="cf_<?php echo e($field->id); ?>"
+            value="<?php echo e($filters['cf_' . $field->id] ?? ''); ?>"
+        >
+
+    <?php elseif($field->field_type === 'number'): ?>
+        <input
+            class="field"
+            type="number"
+            step="0.01"
+            name="cf_<?php echo e($field->id); ?>"
+            value="<?php echo e($filters['cf_' . $field->id] ?? ''); ?>"
+            placeholder="<?php echo e($field->label); ?>"
+        >
+
+    <?php else: ?>
+        <input
+            class="field"
+            type="text"
+            name="cf_<?php echo e($field->id); ?>"
+            value="<?php echo e($filters['cf_' . $field->id] ?? ''); ?>"
+            placeholder="<?php echo e($field->label); ?>"
+        >
+    <?php endif; ?>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             <input type="hidden" name="sort_by" value="<?php echo e($sortBy ?? 'name'); ?>">
             <input type="hidden" name="sort_direction" value="<?php echo e($sortDirection ?? 'asc'); ?>">
 
@@ -598,100 +671,121 @@
                         <tr>
                             <?php $__currentLoopData = $columns; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <td data-column="<?php echo e($key); ?>">
-                                    <?php switch($key):
-                                        case ('code'): ?>
-                                        <?php case ('name'): ?>
-                                        <?php case ('auxiliary_account'): ?>
-                                        <?php case ('default_label'): ?>
-                                        <?php case ('email'): ?>
-                                        <?php case ('phone'): ?>
-                                            <input
-                                                type="text"
-                                                class="supplier-inline-input js-inline-edit"
-                                                data-id="<?php echo e($supplier->id); ?>"
-                                                data-field="<?php echo e($key); ?>"
-                                                value="<?php echo e($supplier->{$key}); ?>"
-                                            >
-                                            <?php break; ?>
+                                    <?php if(str_starts_with($key, 'cf_')): ?>
+    <?php ($dynamicValue = $supplier->getCustomFieldResolvedValue((int) str_replace('cf_', '', $key))); ?>
 
-                                        <?php case ('payment_delay_days'): ?>
-                                        <?php case ('forecast_amount'): ?>
-                                        <?php case ('vat_rate_default'): ?>
-                                            <input
-                                                type="number"
-                                                step="<?php echo e(in_array($key, ['forecast_amount', 'vat_rate_default'], true) ? '0.01' : '1'); ?>"
-                                                class="supplier-inline-input js-inline-edit"
-                                                data-id="<?php echo e($supplier->id); ?>"
-                                                data-field="<?php echo e($key); ?>"
-                                                value="<?php echo e($supplier->{$key}); ?>"
-                                            >
-                                            <?php break; ?>
+    <?php if($dynamicValue === null || $dynamicValue === ''): ?>
+        -
+    <?php elseif($dynamicValue === true || $dynamicValue === '1' || $dynamicValue === 1): ?>
+        <span class="badge success">Oui</span>
+    <?php elseif($dynamicValue === false || $dynamicValue === '0' || $dynamicValue === 0): ?>
+        <span class="badge danger">Non</span>
+    <?php elseif(preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $dynamicValue)): ?>
+        <?php echo e(\Carbon\Carbon::parse($dynamicValue)->format('d/m/Y')); ?>
 
-                                        <?php case ('category'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="category">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['supplier_categories'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->category === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+    <?php elseif(is_numeric($dynamicValue)): ?>
+        <?php echo e(number_format((float) $dynamicValue, 2, ',', ' ')); ?>
 
-                                        <?php case ('third_party_type'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="third_party_type">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['tier_types'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->third_party_type === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+    <?php else: ?>
+        <?php echo e($dynamicValue); ?>
 
-                                        <?php case ('budget_category'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="budget_category">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['budget_categories'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->budget_category === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+    <?php endif; ?>
+<?php else: ?>
+    <?php switch($key):
+        case ('code'): ?>
+        <?php case ('name'): ?>
+        <?php case ('auxiliary_account'): ?>
+        <?php case ('default_label'): ?>
+        <?php case ('email'): ?>
+        <?php case ('phone'): ?>
+            <input
+                type="text"
+                class="supplier-inline-input js-inline-edit"
+                data-id="<?php echo e($supplier->id); ?>"
+                data-field="<?php echo e($key); ?>"
+                value="<?php echo e($supplier->{$key}); ?>"
+            >
+            <?php break; ?>
 
-                                        <?php case ('frequency'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="frequency">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['supplier_frequencies'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->frequency === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+        <?php case ('payment_delay_days'): ?>
+        <?php case ('forecast_amount'): ?>
+        <?php case ('vat_rate_default'): ?>
+            <input
+                type="number"
+                step="<?php echo e(in_array($key, ['forecast_amount', 'vat_rate_default'], true) ? '0.01' : '1'); ?>"
+                class="supplier-inline-input js-inline-edit"
+                data-id="<?php echo e($supplier->id); ?>"
+                data-field="<?php echo e($key); ?>"
+                value="<?php echo e($supplier->{$key}); ?>"
+            >
+            <?php break; ?>
 
-                                        <?php case ('receipt_mode'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="receipt_mode">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['supplier_receipt_modes'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->receipt_mode === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+        <?php case ('category'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="category">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['supplier_categories'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->category === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
 
-                                        <?php case ('payment_mode'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="payment_mode">
-                                                <option value="">-</option>
-                                                <?php $__currentLoopData = $configLists['supplier_payment_modes'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                    <option value="<?php echo e($value); ?>" <?php if($supplier->payment_mode === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
-                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                            </select>
-                                            <?php break; ?>
+        <?php case ('third_party_type'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="third_party_type">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['tier_types'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->third_party_type === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
 
-                                        <?php case ('is_active'): ?>
-                                            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="is_active">
-                                                <option value="1" <?php if($supplier->is_active): echo 'selected'; endif; ?>>Oui</option>
-                                                <option value="0" <?php if(! $supplier->is_active): echo 'selected'; endif; ?>>Non</option>
-                                            </select>
-                                            <?php break; ?>
+        <?php case ('budget_category'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="budget_category">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['budget_categories'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->budget_category === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
 
-                                        <?php default: ?>
-                                            <?php echo e($supplier->{$key}); ?>
+        <?php case ('frequency'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="frequency">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['supplier_frequencies'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->frequency === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
 
-                                    <?php endswitch; ?>
+        <?php case ('receipt_mode'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="receipt_mode">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['supplier_receipt_modes'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->receipt_mode === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
+
+        <?php case ('payment_mode'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="payment_mode">
+                <option value="">-</option>
+                <?php $__currentLoopData = $configLists['supplier_payment_modes'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($value); ?>" <?php if($supplier->payment_mode === $value): echo 'selected'; endif; ?>><?php echo e($value); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
+            <?php break; ?>
+
+        <?php case ('is_active'): ?>
+            <select class="supplier-inline-input js-inline-edit" data-id="<?php echo e($supplier->id); ?>" data-field="is_active">
+                <option value="1" <?php if($supplier->is_active): echo 'selected'; endif; ?>>Oui</option>
+                <option value="0" <?php if(! $supplier->is_active): echo 'selected'; endif; ?>>Non</option>
+            </select>
+            <?php break; ?>
+
+        <?php default: ?>
+            <?php echo e($supplier->{$key}); ?>
+
+    <?php endswitch; ?>
+<?php endif; ?>
                                 </td>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 

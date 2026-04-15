@@ -190,7 +190,7 @@ unset($__errorArgs, $__bag); ?>
                             type="number"
                             step="0.01"
                             name="custom_fields[<?php echo e($field->id); ?>]"
-                            value="<?php echo e(old('custom_fields.' . $field->id, '')); ?>"
+                            value="<?php echo e(old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '')); ?>"
                         >
 
                     <?php elseif($field->field_type === 'date'): ?>
@@ -198,19 +198,28 @@ unset($__errorArgs, $__bag); ?>
                             class="field"
                             type="date"
                             name="custom_fields[<?php echo e($field->id); ?>]"
-                            value="<?php echo e(old('custom_fields.' . $field->id, '')); ?>"
+                            value="<?php echo e(old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '')); ?>"
                         >
 
                     <?php elseif($field->field_type === 'boolean'): ?>
                         <select class="field-select" name="custom_fields[<?php echo e($field->id); ?>]">
                             <option value="">Choisir</option>
-                            <option value="1" <?php if(old('custom_fields.' . $field->id) == '1'): echo 'selected'; endif; ?>>Oui</option>
-                            <option value="0" <?php if(old('custom_fields.' . $field->id) == '0'): echo 'selected'; endif; ?>>Non</option>
+                            <option value="1" <?php if((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === '1'): echo 'selected'; endif; ?>>Oui</option>
+                            <option value="0" <?php if((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === '0'): echo 'selected'; endif; ?>>Non</option>
                         </select>
 
                     <?php elseif($field->field_type === 'select'): ?>
                         <select class="field-select" name="custom_fields[<?php echo e($field->id); ?>]">
                             <option value="">Choisir</option>
+                            <?php $__currentLoopData = $field->optionValues(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $optionValue => $optionLabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option
+                                    value="<?php echo e($optionValue); ?>"
+                                    <?php if((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === (string) $optionValue): echo 'selected'; endif; ?>
+                                >
+                                    <?php echo e($optionLabel); ?>
+
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
 
                     <?php else: ?>
@@ -218,7 +227,7 @@ unset($__errorArgs, $__bag); ?>
                             class="field"
                             type="text"
                             name="custom_fields[<?php echo e($field->id); ?>]"
-                            value="<?php echo e(old('custom_fields.' . $field->id, '')); ?>"
+                            value="<?php echo e(old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '')); ?>"
                         >
                     <?php endif; ?>
 

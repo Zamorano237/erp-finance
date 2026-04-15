@@ -177,7 +177,7 @@
                             type="number"
                             step="0.01"
                             name="custom_fields[{{ $field->id }}]"
-                            value="{{ old('custom_fields.' . $field->id, '') }}"
+                            value="{{ old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') }}"
                         >
 
                     @elseif($field->field_type === 'date')
@@ -185,27 +185,35 @@
                             class="field"
                             type="date"
                             name="custom_fields[{{ $field->id }}]"
-                            value="{{ old('custom_fields.' . $field->id, '') }}"
+                            value="{{ old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') }}"
                         >
 
                     @elseif($field->field_type === 'boolean')
                         <select class="field-select" name="custom_fields[{{ $field->id }}]">
                             <option value="">Choisir</option>
-                            <option value="1" @selected(old('custom_fields.' . $field->id) == '1')>Oui</option>
-                            <option value="0" @selected(old('custom_fields.' . $field->id) == '0')>Non</option>
+                            <option value="1" @selected((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === '1')>Oui</option>
+                            <option value="0" @selected((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === '0')>Non</option>
                         </select>
 
                     @elseif($field->field_type === 'select')
                         <select class="field-select" name="custom_fields[{{ $field->id }}]">
                             <option value="">Choisir</option>
+                            @foreach($field->optionValues() as $optionValue => $optionLabel)
+                                <option
+                                    value="{{ $optionValue }}"
+                                    @selected((string) old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') === (string) $optionValue)
+                                >
+                                    {{ $optionLabel }}
+                                </option>
+                            @endforeach
                         </select>
 
-                    @else     
-                                     <input
+                    @else
+                        <input
                             class="field"
                             type="text"
                             name="custom_fields[{{ $field->id }}]"
-                            value="{{ old('custom_fields.' . $field->id, '') }}"
+                            value="{{ old('custom_fields.' . $field->id, $customFieldValuesMap[$field->id] ?? '') }}"
                         >
                     @endif
 
