@@ -200,8 +200,8 @@
                             <option value="">Choisir</option>
                         </select>
 
-                    @else
-                        <input
+                    @else     
+                                     <input
                             class="field"
                             type="text"
                             name="custom_fields[{{ $field->id }}]"
