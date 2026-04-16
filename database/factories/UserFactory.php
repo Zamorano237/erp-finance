@@ -32,7 +32,33 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
         ];
     }
+    public function admin(): static
+{
+    return $this->state(fn () => [
+        'role' => 'admin',
+    ]);
+}
 
+public function finance(): static
+{
+    return $this->state(fn () => [
+        'role' => 'finance',
+    ]);
+}
+
+public function validator(): static
+{
+    return $this->state(fn () => [
+        'role' => 'validator',
+    ]);
+}
+
+public function reader(): static
+{
+    return $this->state(fn () => [
+        'role' => 'reader',
+    ]);
+}
     /**
      * Indicate that the model's email address should be unverified.
      */

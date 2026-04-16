@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title><?php echo e($title ?? 'ERP Finance'); ?></title>
@@ -11,48 +12,51 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        :root{
-            --bg:#f3f7fb;
-            --bg-2:#eef4f8;
-            --surface:#ffffff;
-            --surface-soft:#f9fbfd;
-            --surface-alt:#f4f8fb;
-            --sidebar:#082b3a;
-            --sidebar-2:#0d3b4f;
-            --sidebar-hover:#134d64;
-            --primary:#11a7a8;
-            --primary-2:#1089cf;
-            --primary-dark:#0a6e74;
-            --primary-soft:#e8fbfb;
-            --text:#14344b;
-            --text-soft:#647b8f;
-            --text-faint:#8ca0b1;
-            --border:#d8e4ee;
-            --border-2:#c7d6e3;
-            --danger:#d9534f;
-            --danger-soft:#fff3f2;
-            --success:#2f9e44;
-            --success-soft:#edf9f0;
-            --warning:#f0ad4e;
-            --warning-soft:#fff7ea;
-            --info:#1683d7;
-            --info-soft:#eef7ff;
-            --shadow-sm:0 8px 20px rgba(18, 47, 67, .06);
-            --shadow-md:0 16px 40px rgba(13, 34, 49, .10);
-            --shadow-lg:0 22px 60px rgba(7, 28, 41, .16);
-            --radius-xs:10px;
-            --radius-sm:14px;
-            --radius-md:18px;
-            --radius-lg:24px;
-            --radius-xl:30px;
-            --sidebar-width:280px;
-            --sidebar-collapsed:94px;
-            --topbar-height:84px;
+        :root {
+            --bg: #f3f7fb;
+            --bg-2: #eef4f8;
+            --surface: #ffffff;
+            --surface-soft: #f9fbfd;
+            --surface-alt: #f4f8fb;
+            --sidebar: #082b3a;
+            --sidebar-2: #0d3b4f;
+            --sidebar-hover: #134d64;
+            --primary: #11a7a8;
+            --primary-2: #1089cf;
+            --primary-dark: #0a6e74;
+            --primary-soft: #e8fbfb;
+            --text: #14344b;
+            --text-soft: #647b8f;
+            --text-faint: #8ca0b1;
+            --border: #d8e4ee;
+            --border-2: #c7d6e3;
+            --danger: #d9534f;
+            --danger-soft: #fff3f2;
+            --success: #2f9e44;
+            --success-soft: #edf9f0;
+            --warning: #f0ad4e;
+            --warning-soft: #fff7ea;
+            --info: #1683d7;
+            --info-soft: #eef7ff;
+            --shadow-sm: 0 8px 20px rgba(18, 47, 67, .06);
+            --shadow-md: 0 16px 40px rgba(13, 34, 49, .10);
+            --shadow-lg: 0 22px 60px rgba(7, 28, 41, .16);
+            --radius-xs: 10px;
+            --radius-sm: 14px;
+            --radius-md: 18px;
+            --radius-lg: 24px;
+            --radius-xl: 30px;
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 94px;
+            --topbar-height: 84px;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             font-family: 'Inter', sans-serif;
@@ -69,7 +73,10 @@
             text-decoration: none;
         }
 
-        button, input, select, textarea {
+        button,
+        input,
+        select,
+        textarea {
             font: inherit;
         }
 
@@ -107,8 +114,8 @@
             width: 42px;
             height: 42px;
             border-radius: 14px;
-            border: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, .08);
             color: #fff;
             display: grid;
             place-items: center;
@@ -117,7 +124,7 @@
         }
 
         .sidebar-toggle:hover {
-            background: rgba(255,255,255,.14);
+            background: rgba(255, 255, 255, .14);
         }
 
         .brand-block {
@@ -133,8 +140,8 @@
             border-radius: 18px;
             display: grid;
             place-items: center;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.10);
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .10);
             font-weight: 800;
             font-size: 18px;
             letter-spacing: .4px;
@@ -156,7 +163,7 @@
         .brand-subtitle {
             font-size: 13px;
             line-height: 1.45;
-            color: rgba(255,255,255,.72);
+            color: rgba(255, 255, 255, .72);
         }
 
         .sidebar.collapsed .brand-text,
@@ -179,19 +186,19 @@
             min-height: 54px;
             padding: 0 14px;
             border-radius: 18px;
-            color: rgba(255,255,255,.82);
+            color: rgba(255, 255, 255, .82);
             font-weight: 700;
             transition: .2s ease;
         }
 
         .nav-link:hover {
-            background: rgba(255,255,255,.06);
+            background: rgba(255, 255, 255, .06);
             color: #fff;
         }
 
         .nav-link.active {
-            background: rgba(255,255,255,.10);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+            background: rgba(255, 255, 255, .10);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05);
             color: #fff;
         }
 
@@ -206,8 +213,8 @@
             margin-top: auto;
             padding: 18px 16px;
             border-radius: 22px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .08);
         }
 
         .sidebar-footer-title {
@@ -219,7 +226,7 @@
         .sidebar-footer-text {
             font-size: 13px;
             line-height: 1.55;
-            color: rgba(255,255,255,.74);
+            color: rgba(255, 255, 255, .74);
         }
 
         .main-shell {
@@ -236,9 +243,9 @@
             justify-content: space-between;
             gap: 16px;
             padding: 18px 28px;
-            background: rgba(255,255,255,.78);
+            background: rgba(255, 255, 255, .78);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(210,223,233,.85);
+            border-bottom: 1px solid rgba(210, 223, 233, .85);
             position: sticky;
             top: 0;
             z-index: 20;
@@ -401,8 +408,8 @@
         }
 
         .panel {
-            background: rgba(255,255,255,.94);
-            border: 1px solid rgba(211,224,233,.95);
+            background: rgba(255, 255, 255, .94);
+            border: 1px solid rgba(211, 224, 233, .95);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-md);
             overflow: hidden;
@@ -488,8 +495,8 @@
         .field-select:focus,
         .field-textarea:focus {
             background: #fff;
-            border-color: rgba(17,167,168,.55);
-            box-shadow: 0 0 0 4px rgba(17,167,168,.08);
+            border-color: rgba(17, 167, 168, .55);
+            box-shadow: 0 0 0 4px rgba(17, 167, 168, .08);
         }
 
         .btn {
@@ -521,11 +528,11 @@
         .btn-primary {
             color: #fff;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
-            box-shadow: 0 12px 24px rgba(17,167,168,.18);
+            box-shadow: 0 12px 24px rgba(17, 167, 168, .18);
         }
 
         .btn-primary:hover {
-            box-shadow: 0 16px 28px rgba(17,167,168,.24);
+            box-shadow: 0 16px 28px rgba(17, 167, 168, .24);
         }
 
         .btn-light {
@@ -758,7 +765,7 @@
             font-size: 14px;
             font-weight: 800;
             padding: 16px 18px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
         }
 
         .premium-table thead th:first-child {
@@ -815,8 +822,8 @@
 
         .inline-input:focus {
             background: #fff;
-            border-color: rgba(17,167,168,.55);
-            box-shadow: 0 0 0 4px rgba(17,167,168,.08);
+            border-color: rgba(17, 167, 168, .55);
+            box-shadow: 0 0 0 4px rgba(17, 167, 168, .08);
         }
 
         .inline-input.saving {
@@ -1046,6 +1053,7 @@
         }
 
         @media (max-width: 1280px) {
+
             .toolbar-grid,
             .toolbar-grid.two-rows {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1125,182 +1133,190 @@
         }
     </style>
 </head>
+
 <body>
-<div class="app-shell">
-    <aside class="sidebar" id="appSidebar">
-        <div class="sidebar-head">
-            <button class="sidebar-toggle" type="button" id="sidebarCollapseBtn" title="Replier / déplier">
-                <i data-lucide="panel-left-close"></i>
-            </button>
-        </div>
-
-        <div class="brand-block">
-            <div class="brand-mark">ERP</div>
-            <div class="brand-text">
-                <div class="brand-title">ERP Finance</div>
-                <div class="brand-subtitle">Socle premium Laravel<br>Gestion modulaire</div>
-            </div>
-        </div>
-
-        <nav class="nav-section">
-            <a class="nav-link <?php echo e(request()->routeIs('dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('dashboard')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="layout-dashboard"></i></span>
-                <span class="nav-text">Dashboard</span>
-            </a>
-
-            <a class="nav-link <?php echo e(request()->routeIs('suppliers.*') ? 'active' : ''); ?>" href="<?php echo e(route('suppliers.index')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="building-2"></i></span>
-                <span class="nav-text">Fournisseurs</span>
-            </a>
-
-            <a class="nav-link <?php echo e(request()->routeIs('expenses.*') ? 'active' : ''); ?>" href="<?php echo e(route('expenses.index')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="receipt"></i></span>
-                <span class="nav-text">Dépenses</span>
-            </a>
-
-            <a class="nav-link <?php echo e(request()->routeIs('budgets.*') ? 'active' : ''); ?>" href="<?php echo e(route('budgets.index')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="wallet-cards"></i></span>
-                <span class="nav-text">Budgets</span>
-            </a>
-
-            <a class="nav-link <?php echo e(request()->routeIs('treasury.*') ? 'active' : ''); ?>" href="<?php echo e(route('treasury.index')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="line-chart"></i></span>
-                <span class="nav-text">Trésorerie</span>
-            </a>
-
-            <a class="nav-link <?php echo e(request()->routeIs('options.*') ? 'active' : ''); ?>" href="<?php echo e(route('options.index')); ?>">
-                <span class="nav-icon-wrap"><i data-lucide="settings-2"></i></span>
-                <span class="nav-text">Options</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-footer-title">Socle V2 premium</div>
-            <div class="sidebar-footer-text">
-                Référentiels, édition inline, préférences colonnes, listes paramétrables, base ERP modulaire.
-            </div>
-        </div>
-    </aside>
-
-    <div class="main-shell">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button type="button" class="topbar-mobile-toggle" id="mobileSidebarBtn">
-                    <i data-lucide="menu"></i>
+    <div class="app-shell">
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-head">
+                <button class="sidebar-toggle" type="button" id="sidebarCollapseBtn" title="Replier / déplier">
+                    <i data-lucide="panel-left-close"></i>
                 </button>
+            </div>
 
-                <div class="page-meta">
-                    <h2><?php echo e($title ?? 'ERP Finance'); ?></h2>
-                    <p><?php echo e($subtitle ?? 'Pilotage ERP modulaire premium'); ?></p>
+            <div class="brand-block">
+                <div class="brand-mark">ERP</div>
+                <div class="brand-text">
+                    <div class="brand-title">ERP Finance</div>
+                    <div class="brand-subtitle">Socle premium Laravel<br>Gestion modulaire</div>
                 </div>
             </div>
 
-            <div class="topbar-right">
-                <div class="topbar-chip">
-                    <i data-lucide="sparkles"></i>
-                    Interface premium
-                </div>
+            <nav class="nav-section">
+                <a class="nav-link <?php echo e(request()->routeIs('dashboard') ? 'active' : ''); ?>" href="<?php echo e(route('dashboard')); ?>">
+                    <span class="nav-icon-wrap"><i data-lucide="layout-dashboard"></i></span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
 
-                <div class="user-chip">
-                    <div class="user-chip-text">
-                        <div class="user-chip-name"><?php echo e(auth()->user()->name ?? 'Admin'); ?></div>
-                        <div class="user-chip-role"><?php echo e(auth()->user()->role ?? 'ERP Manager'); ?></div>
-                    </div>
-                    <div class="user-avatar">
-                        <?php echo e(strtoupper(substr(auth()->user()->name ?? 'A', 0, 1))); ?>
+                <a class="nav-link <?php echo e(request()->routeIs('suppliers.*') ? 'active' : ''); ?>" href="<?php echo e(route('suppliers.index')); ?>">
+                    <span class="nav-icon-wrap"><i data-lucide="building-2"></i></span>
+                    <span class="nav-text">Fournisseurs</span>
+                </a>
 
-                    </div>
+                <a class="nav-link <?php echo e(request()->routeIs('expenses.*') ? 'active' : ''); ?>" href="<?php echo e(route('expenses.index')); ?>">
+                    <span class="nav-icon-wrap"><i data-lucide="receipt"></i></span>
+                    <span class="nav-text">Dépenses</span>
+                </a>
+
+                <a class="nav-link <?php echo e(request()->routeIs('budgets.*') ? 'active' : ''); ?>" href="<?php echo e(route('budgets.index')); ?>">
+                    <span class="nav-icon-wrap"><i data-lucide="wallet-cards"></i></span>
+                    <span class="nav-text">Budgets</span>
+                </a>
+
+                <?php
+                $hasTreasury = Route::has('treasury.index');
+                ?>
+
+                <a class="nav-link <?php echo e($hasTreasury && request()->routeIs('treasury.*') ? 'active' : ''); ?> <?php echo e(!$hasTreasury ? 'disabled opacity-50' : ''); ?>"
+                    href="<?php echo e($hasTreasury ? route('treasury.index') : '#'); ?>">
+
+                    <span class="nav-icon-wrap"><i data-lucide="line-chart"></i></span>
+                    <span class="nav-text">Trésorerie</span>
+                </a>
+
+                <a class="nav-link <?php echo e(request()->routeIs('options.*') ? 'active' : ''); ?>" href="<?php echo e(route('options.index')); ?>">
+                    <span class="nav-icon-wrap"><i data-lucide="settings-2"></i></span>
+                    <span class="nav-text">Options</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-title">Socle V2 premium</div>
+                <div class="sidebar-footer-text">
+                    Référentiels, édition inline, préférences colonnes, listes paramétrables, base ERP modulaire.
                 </div>
             </div>
-        </header>
+        </aside>
 
-        <main class="page-content">
-            <?php if(session('success') || session('error')): ?>
+        <div class="main-shell">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button type="button" class="topbar-mobile-toggle" id="mobileSidebarBtn">
+                        <i data-lucide="menu"></i>
+                    </button>
+
+                    <div class="page-meta">
+                        <h2><?php echo e($title ?? 'ERP Finance'); ?></h2>
+                        <p><?php echo e($subtitle ?? 'Pilotage ERP modulaire premium'); ?></p>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="topbar-chip">
+                        <i data-lucide="sparkles"></i>
+                        Interface premium
+                    </div>
+
+                    <div class="user-chip">
+                        <div class="user-chip-text">
+                            <div class="user-chip-name"><?php echo e(auth()->user()->name ?? 'Admin'); ?></div>
+                            <div class="user-chip-role"><?php echo e(auth()->user()->role ?? 'ERP Manager'); ?></div>
+                        </div>
+                        <div class="user-avatar">
+                            <?php echo e(strtoupper(substr(auth()->user()->name ?? 'A', 0, 1))); ?>
+
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+                <?php if(session('success') || session('error')): ?>
                 <div class="flash-stack">
                     <?php if(session('success')): ?>
-                        <div class="flash success">
-                            <i data-lucide="badge-check"></i>
-                            <span><?php echo e(session('success')); ?></span>
-                        </div>
+                    <div class="flash success">
+                        <i data-lucide="badge-check"></i>
+                        <span><?php echo e(session('success')); ?></span>
+                    </div>
                     <?php endif; ?>
                     <?php if(session('error')): ?>
-                        <div class="flash error">
-                            <i data-lucide="triangle-alert"></i>
-                            <span><?php echo e(session('error')); ?></span>
-                        </div>
+                    <div class="flash error">
+                        <i data-lucide="triangle-alert"></i>
+                        <span><?php echo e(session('error')); ?></span>
+                    </div>
                     <?php endif; ?>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php echo $__env->yieldContent('content'); ?>
-        </main>
+                <?php echo $__env->yieldContent('content'); ?>
+            </main>
+        </div>
     </div>
-</div>
 
-<script>
-    lucide.createIcons();
+    <script>
+        lucide.createIcons();
 
-    const sidebar = document.getElementById('appSidebar');
-    const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
-    const mobileSidebarBtn = document.getElementById('mobileSidebarBtn');
+        const sidebar = document.getElementById('appSidebar');
+        const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+        const mobileSidebarBtn = document.getElementById('mobileSidebarBtn');
 
-    if (sidebarCollapseBtn) {
-        sidebarCollapseBtn.addEventListener('click', function () {
-            if (window.innerWidth <= 980) {
+        if (sidebarCollapseBtn) {
+            sidebarCollapseBtn.addEventListener('click', function() {
+                if (window.innerWidth <= 980) {
+                    sidebar.classList.toggle('mobile-open');
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                    localStorage.setItem('erp.sidebar.collapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
+                }
+            });
+        }
+
+        if (mobileSidebarBtn) {
+            mobileSidebarBtn.addEventListener('click', function() {
                 sidebar.classList.toggle('mobile-open');
-            } else {
-                sidebar.classList.toggle('collapsed');
-                localStorage.setItem('erp.sidebar.collapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
+            });
+        }
+
+        if (window.innerWidth > 980 && localStorage.getItem('erp.sidebar.collapsed') === '1') {
+            sidebar.classList.add('collapsed');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth > 980) return;
+            if (!sidebar.contains(e.target) && mobileSidebarBtn && !mobileSidebarBtn.contains(e.target)) {
+                sidebar.classList.remove('mobile-open');
             }
         });
-    }
 
-    if (mobileSidebarBtn) {
-        mobileSidebarBtn.addEventListener('click', function () {
-            sidebar.classList.toggle('mobile-open');
+        document.querySelectorAll('[data-open-modal]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-open-modal');
+                const modal = document.getElementById(id);
+                if (modal) modal.classList.add('open');
+            });
         });
-    }
 
-    if (window.innerWidth > 980 && localStorage.getItem('erp.sidebar.collapsed') === '1') {
-        sidebar.classList.add('collapsed');
-    }
-
-    document.addEventListener('click', function (e) {
-        if (window.innerWidth > 980) return;
-        if (!sidebar.contains(e.target) && mobileSidebarBtn && !mobileSidebarBtn.contains(e.target)) {
-            sidebar.classList.remove('mobile-open');
-        }
-    });
-
-    document.querySelectorAll('[data-open-modal]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-open-modal');
-            const modal = document.getElementById(id);
-            if (modal) modal.classList.add('open');
+        document.querySelectorAll('[data-close-modal]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) modal.classList.remove('open');
+            });
         });
-    });
 
-    document.querySelectorAll('[data-close-modal]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const modal = btn.closest('.modal');
-            if (modal) modal.classList.remove('open');
+        document.querySelectorAll('[data-open-drawer]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-open-drawer');
+                const drawer = document.getElementById(id);
+                if (drawer) drawer.classList.add('open');
+            });
         });
-    });
 
-    document.querySelectorAll('[data-open-drawer]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-open-drawer');
-            const drawer = document.getElementById(id);
-            if (drawer) drawer.classList.add('open');
+        document.querySelectorAll('[data-close-drawer]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const drawer = btn.closest('.drawer');
+                if (drawer) drawer.classList.remove('open');
+            });
         });
-    });
-
-    document.querySelectorAll('[data-close-drawer]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const drawer = btn.closest('.drawer');
-            if (drawer) drawer.classList.remove('open');
-        });
-    });
-</script>
+    </script>
 </body>
+
 </html><?php /**PATH C:\dev\erp-finance\resources\views/layouts/app.blade.php ENDPATH**/ ?>

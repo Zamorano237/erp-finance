@@ -13,17 +13,17 @@ class Payment extends Model
     protected $fillable = [
         'expense_id',
         'expense_allocation_id',
-        'payment_date',
         'amount',
-        'payment_mode',
+        'payment_date',
+        'payment_method',
         'reference',
-        'status',
-        'comments',
+        'comment',
+        'paid_by',
     ];
 
     protected $casts = [
-        'payment_date' => 'date',
         'amount' => 'decimal:2',
+        'payment_date' => 'date',
     ];
 
     public function expense(): BelongsTo
@@ -34,5 +34,10 @@ class Payment extends Model
     public function allocation(): BelongsTo
     {
         return $this->belongsTo(ExpenseAllocation::class, 'expense_allocation_id');
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 }

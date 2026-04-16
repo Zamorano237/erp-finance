@@ -2,136 +2,192 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ExpenseRequest;
+use App\DataTransferObjects\ExpenseFiltersData;
+use App\Http\Requests\ExpenseStoreRequest;
 use App\Models\Expense;
-use App\Models\ExpenseAllocation;
+use App\Models\SavedView;
 use App\Models\Supplier;
-use App\Support\Enums;
+use App\Services\ExpenseApprovalService;
+use App\Services\ExpenseAttachmentService;
+use App\Services\ExpenseCommentService;
+use App\Services\ExpenseListService;
+use App\Services\ExpenseService;
+use App\Services\SavedViewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
+use App\Services\ExpenseDetailViewService;
 
 class ExpenseController extends Controller
 {
+    public function __construct(
+        private readonly ExpenseService $expenseService,
+        private readonly ExpenseApprovalService $approvalService,
+        private readonly ExpenseCommentService $commentService,
+        private readonly ExpenseAttachmentService $attachmentService,
+        private readonly ExpenseListService $expenseListService,
+        private readonly SavedViewService $savedViewService,
+        private readonly ExpenseDetailViewService $expenseDetailViewService,
+    ) {}
+
     public function index(Request $request): View
     {
-        $query = Expense::query()->with('supplier')->latest();
+        $this->authorize('viewAny', Expense::class);
+        $filters = ExpenseFiltersData::fromRequest($request);
 
-        if ($status = $request->string('status')->toString()) {
-            $query->where('status', $status);
-        }
+        $expenses = $this->expenseListService->paginate($filters, 25);
 
-        if ($search = $request->string('q')->toString()) {
-            $query->where(function ($inner) use ($search) {
-                $inner->where('label', 'like', "%{$search}%")
-                    ->orWhere('invoice_number', 'like', "%{$search}%")
-                    ->orWhere('reference', 'like', "%{$search}%");
-            });
-        }
+        $savedViews = $this->savedViewService->listForUser(auth()->id(), 'expenses');
+        $defaultView = $this->savedViewService->getDefaultForUser(auth()->id(), 'expenses');
+
+        $suppliers = Supplier::query()->orderBy('name')->get(['id', 'name']);
 
         return view('expenses.index', [
-            'expenses' => $query->paginate(15)->withQueryString(),
-            'statuses' => Enums::EXPENSE_STATUSES,
+            'expenses' => $expenses,
+            'filters' => $filters,
+            'savedViews' => $savedViews,
+            'defaultView' => $defaultView,
+            'suppliers' => $suppliers,
+            'availableColumns' => $this->availableColumns(),
         ]);
     }
 
     public function create(): View
     {
-        return view('expenses.form', [
-            'expense' => new Expense(['status' => 'ouverte', 'validation_status' => 'non_soumise']),
-            'suppliers' => Supplier::orderBy('name')->get(),
-            'statuses' => Enums::EXPENSE_STATUSES,
-            'validationStatuses' => Enums::VALIDATION_STATUSES,
-            'budgetCategories' => Enums::BUDGET_CATEGORIES,
-            'tiersTypes' => Enums::TIERS_TYPES,
+        $this->authorize('create', Expense::class);
+
+        return view('expenses.create', [
+            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
         ]);
+    } 
+
+    public function store(ExpenseStoreRequest $request): RedirectResponse
+    {
+        $this->authorize('create', Expense::class);
+
+        $expense = $this->expenseService->create($request->validated());
+
+        return redirect()
+            ->route('expenses.show', $expense)
+            ->with('success', 'Dépense créée avec succès.');
     }
 
-    public function store(ExpenseRequest $request): RedirectResponse
+    public function show(Expense $expense): View
     {
-        $data = $request->validated();
-        $data['reference'] = $data['reference'] ?: 'DEP-' . now()->format('Ymd') . '-' . Str::upper(Str::random(5));
-        $data['amount_paid'] = $data['amount_paid'] ?? 0;
-        $data['balance_due'] = max(0, (float) $data['amount_ttc'] - (float) $data['amount_paid']);
+        $this->authorize('view', $expense);
 
-        Expense::create($data);
+        $data = $this->expenseDetailViewService->build($expense);
 
-        return redirect()->route('expenses.index')->with('success', 'Dépense créée avec succès.');
+        return view('expenses.show', $data);
     }
 
     public function edit(Expense $expense): View
     {
-        $expense->load(['allocations', 'payments']);
-
-        return view('expenses.form', [
+        $this->authorize('update', $expense);
+        return view('expenses.edit', [
             'expense' => $expense,
-            'suppliers' => Supplier::orderBy('name')->get(),
-            'statuses' => Enums::EXPENSE_STATUSES,
-            'validationStatuses' => Enums::VALIDATION_STATUSES,
-            'budgetCategories' => Enums::BUDGET_CATEGORIES,
-            'tiersTypes' => Enums::TIERS_TYPES,
+            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
-    public function update(ExpenseRequest $request, Expense $expense): RedirectResponse
+    public function update(ExpenseStoreRequest $request, Expense $expense): RedirectResponse
     {
-        $data = $request->validated();
-        $data['amount_paid'] = $data['amount_paid'] ?? 0;
-        $data['balance_due'] = max(0, (float) $data['amount_ttc'] - (float) $data['amount_paid']);
+        $this->authorize('update', $expense);
+        $expense = $this->expenseService->update($expense, $request->validated());
 
-        $expense->update($data);
-
-        return redirect()->route('expenses.index')->with('success', 'Dépense mise à jour avec succès.');
+        return redirect()
+            ->route('expenses.show', $expense)
+            ->with('success', 'Dépense mise à jour avec succès.');
     }
 
-    public function destroy(Expense $expense): RedirectResponse
+    public function submitForApproval(Expense $expense): RedirectResponse
     {
-        $expense->delete();
+        $this->authorize('submitForApproval', $expense);
+        $this->approvalService->submit($expense, auth()->id());
 
-        return redirect()->route('expenses.index')->with('success', 'Dépense supprimée.');
+        return back()->with('success', 'Dépense soumise en validation.');
     }
 
-    public function generateAllocation(Expense $expense): RedirectResponse
+    public function approve(Request $request, Expense $expense): RedirectResponse
     {
-        $expense->loadMissing('allocations');
+        $this->authorize('approve', $expense);
+        $this->approvalService->approve(
+            $expense,
+            auth()->id(),
+            $request->string('comment')->toString()
+        );
 
-        if ($expense->allocations()->exists()) {
-            return redirect()->route('expenses.edit', $expense)->with('success', 'Ventilation déjà générée.');
-        }
+        return back()->with('success', 'Dépense validée.');
+    }
 
-        $start = $expense->service_start_date ?? $expense->invoice_date ?? now();
-        $end = $expense->service_end_date ?? $start;
-        $months = max(1, $start->diffInMonths($end) + 1);
-        $baseAmount = round((float) $expense->amount_ttc / $months, 2);
+    public function reject(Request $request, Expense $expense): RedirectResponse
+    {
+        $this->approvalService->reject(
+            $expense,
+            auth()->id(),
+            $request->string('comment')->toString()
+        );
 
-        for ($i = 0; $i < $months; $i++) {
-            $period = $start->copy()->addMonths($i);
-            $amount = $i === ($months - 1)
-                ? round((float) $expense->amount_ttc - ($baseAmount * ($months - 1)), 2)
-                : $baseAmount;
+        return back()->with('success', 'Dépense rejetée.');
+    }
 
-            ExpenseAllocation::create([
-                'expense_id' => $expense->id,
-                'line_number' => $i + 1,
-                'period_label' => $period->translatedFormat('M Y'),
-                'start_date' => $period->copy()->startOfMonth(),
-                'end_date' => $period->copy()->endOfMonth(),
-                'allocation_year' => (int) $period->format('Y'),
-                'allocation_month' => (int) $period->format('m'),
-                'allocated_amount' => $amount,
-                'paid_amount' => 0,
-                'balance_due' => $amount,
-                'percentage' => round(100 / $months, 2),
-                'planned_payment_date' => $period->copy()->endOfMonth(),
-                'payment_mode' => $expense->payment_mode,
-                'status' => 'a_payer',
-                'is_active' => true,
-            ]);
-        }
+    public function addComment(Request $request, Expense $expense): RedirectResponse
+    {
+        $this->authorize('comment', $expense);
 
-        $expense->update(['is_allocated' => true]);
+        $validated = $request->validate([
+            'content' => ['required', 'string'],
+            'comment_type' => ['nullable', 'string', 'max:50'],
+            'is_internal' => ['nullable', 'boolean'],
+        ]);
 
-        return redirect()->route('expenses.edit', $expense)->with('success', 'Ventilation générée avec succès.');
+        $this->commentService->add(
+            expense: $expense,
+            userId: auth()->id(),
+            content: $validated['content'],
+            type: $validated['comment_type'] ?? 'general',
+            isInternal: (bool) ($validated['is_internal'] ?? false),
+        );
+
+        return back()->with('success', 'Commentaire ajouté.');
+    }
+
+    public function uploadAttachment(Request $request, Expense $expense): RedirectResponse
+    {
+        $this->authorize('uploadAttachment', $expense);
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'max:10240'],
+            'is_primary' => ['nullable', 'boolean'],
+        ]);
+
+        $this->attachmentService->upload(
+            expense: $expense,
+            file: $validated['file'],
+            uploadedBy: auth()->id(),
+            isPrimary: (bool) ($validated['is_primary'] ?? false),
+        );
+
+        return back()->with('success', 'Pièce jointe ajoutée.');
+    }
+
+    protected function availableColumns(): array
+    {
+        return [
+            'reference' => 'Référence',
+            'label' => 'Libellé',
+            'third_party_name' => 'Tiers',
+            'expense_type' => 'Type',
+            'document_status' => 'Statut documentaire',
+            'status' => 'Statut opérationnel',
+            'validation_status' => 'Statut validation',
+            'payment_mode' => 'Mode de règlement',
+            'amount_ttc' => 'Montant TTC',
+            'amount_paid' => 'Montant payé',
+            'balance_due' => 'Solde',
+            'invoice_date' => 'Date facture',
+            'planned_payment_date' => 'Date prévue paiement',
+            'due_date' => 'Échéance',
+            'created_at' => 'Créée le',
+        ];
     }
 }

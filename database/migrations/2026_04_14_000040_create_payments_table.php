@@ -9,14 +9,21 @@ return new class extends Migration {
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('expense_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('expense_allocation_id')->nullable()->constrained('expense_allocations')->nullOnDelete();
+            $table->foreignId('expense_allocation_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->decimal('amount', 15, 2);
+
             $table->date('payment_date');
-            $table->decimal('amount', 15, 2)->default(0);
-            $table->string('payment_mode')->nullable();
-            $table->string('reference')->nullable();
-            $table->string('status', 50)->default('valide');
-            $table->text('comments')->nullable();
+
+            $table->string('payment_method')->nullable(); // ✅ AJOUT ICI
+            $table->string('reference')->nullable();      // ⚠️ UNE SEULE FOIS
+
+            $table->text('comment')->nullable();
+
+            $table->foreignId('paid_by')->nullable()->constrained('users')->nullOnDelete();
+
             $table->timestamps();
         });
     }

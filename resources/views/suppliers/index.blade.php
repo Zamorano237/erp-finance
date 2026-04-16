@@ -443,11 +443,7 @@
                 <div class="supplier-bar-track">
                     <div
                         class="supplier-bar-fill"
-                        style="width: {{
-                                    max(($dashboard['top_categories'] ?? [1])) > 0
-                                        ? (($value / max(($dashboard['top_categories'] ?? [1]))) * 100)
-                                        : 0
-                                }}%;"></div>
+                        style="width: {{ max(($dashboard['top_categories'] ?? [1])) > 0 ? (($value / max(($dashboard['top_categories'] ?? [1]))) * 100) : 0 }}%"></div>
                 </div>
                 <div class="supplier-bar-value">{{ $value }}</div>
             </div>
@@ -988,18 +984,17 @@
             const columns = Array.from(document.querySelectorAll('.js-column-toggle:checked')).map(i => i.value);
             localStorage.setItem(columnsStorageKey, JSON.stringify(columns));
 
-            await fetch('{{ route('
-                suppliers.save - columns ') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrf,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        columns
-                    })
-                });
+            await fetch("{{ route('suppliers.save-columns') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    columns
+                })
+            });
 
             applyColumns();
             document.getElementById('columnsDrawer').classList.remove('open');
